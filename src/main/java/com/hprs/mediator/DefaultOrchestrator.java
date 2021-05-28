@@ -7,8 +7,11 @@ import akka.event.LoggingAdapter;
 import com.google.gson.Gson;
 import com.hprs.mediator.model.SourceMassage;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 import org.json.JSONObject;
 import org.openhim.mediator.engine.MediatorConfig;
+import org.openhim.mediator.engine.messages.FinishRequest;
 import org.openhim.mediator.engine.messages.MediatorHTTPRequest;
 import org.openhim.mediator.engine.messages.MediatorHTTPResponse;
 
@@ -37,6 +40,24 @@ public class DefaultOrchestrator extends UntypedActor {
             // cast object to Source Object
             SourceMassage sourceMassage = new Gson().fromJson(body, SourceMassage.class);
             //Deserialize the object back to JSON
+
+            if (!StringUtils.isBlank(sourceMassage.getLongitude()) ||
+                    !StringUtils.isBlank(sourceMassage.getLongitude())) {
+                try {
+
+                    double latitude = Double.parseDouble(sourceMassage.getLatitude());
+                    double longitude = Double.parseDouble(sourceMassage.getLongitude());
+
+                } catch (Exception e) {
+                    FinishRequest finishRequest = new FinishRequest(
+                            ((MediatorHTTPRequest) msg).getBody(),
+                            "application/json",
+                            HttpStatus.SC_OK);
+
+                    ((MediatorHTTPRequest) msg).getRequestHandler().tell(finishRequest,
+                            getSelf());
+                }
+            }
             String convertedMessage = new Gson().toJson(sourceMassage);
 
             HashMap<String, String> header = new HashMap<>();
